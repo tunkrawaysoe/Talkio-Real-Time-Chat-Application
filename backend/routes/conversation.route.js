@@ -99,6 +99,69 @@ router.post("/", authenticate, async (req, res) => {
     }
 });
 
+router.get("/", authenticate, async (req, res) => {
+    const userId = req.userId;
+
+    try {
+        const conversations = await prisma.conversation.findMany({
+            where: {
+                participants: {
+                    some: {
+                        userId,
+                    },
+                },
+            },
+            select: {
+                id: true,
+                participants: {
+                    select: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true
+                            }
+                        }
+                    }
+                },
+                messages: {
+                    select: {
+                        content: true,
+                        sender: {
+                            select: {
+                                id: true,
+                                name: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        const formattedConversations = conversations.map((conversation) => ({
+            ...conversation,
+            participants: conversation.participants.map(participant => (
+                {
+                    userId: participant.user.id,
+                    name: participant.user.name
+                }
+            )),
+            messages: conversation.messages.map((message) => ({
+                userId: message.sender.id,
+                name: message.sender.name,
+                content: message.content,
+            })),
+        }));
+
+        return res.status(200).json(formattedConversations);
+    } catch (error) {
+        console.error(error);
+
+        return res.status(500).json({
+            message: "Failed to get conversations",
+        });
+    }
+});
+
 router.get("/:conversationId", async (req, res) => {
     const id = Number(req.params.conversationId);
 

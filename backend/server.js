@@ -4,12 +4,19 @@ import { Server } from "socket.io";
 import dotenv from "dotenv";
 import userRoute from "./routes/auth.route.js"
 import conversationRoute from './routes/conversation.route.js'
-import messageRoute from './routes/message.route.js'
+import messageRoute from './routes/message.route.js';
+import cors from "cors";
 dotenv.config();
 
 const app = express();
 const httpServer = http.createServer(app);
 const PORT = process.env.PORT;
+
+app.use(
+    cors({
+        origin: "http://localhost:5173",
+    })
+);
 
 
 app.use(express.json());
