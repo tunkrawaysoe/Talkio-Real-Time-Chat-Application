@@ -113,7 +113,13 @@ router.get("/", authenticate, async (req, res) => {
             },
             select: {
                 id: true,
+                name: true,
                 participants: {
+                    where: {
+                        userId: {
+                            not: userId
+                        }
+                    },
                     select: {
                         user: {
                             select: {
@@ -124,35 +130,42 @@ router.get("/", authenticate, async (req, res) => {
                     }
                 },
                 messages: {
+                    orderBy: {
+                        createdAt: "desc"
+                    },
+                    take: 1,
                     select: {
-                        content: true,
                         sender: {
                             select: {
                                 id: true,
-                                name: true,
-                            },
+                                name: true
+                            }
                         },
+                        content: true,
                     },
                 },
             },
         });
 
         const formattedConversations = conversations.map((conversation) => ({
-            ...conversation,
-            participants: conversation.participants.map(participant => (
-                {
-                    userId: participant.user.id,
-                    name: participant.user.name
-                }
-            )),
-            messages: conversation.messages.map((message) => ({
-                userId: message.sender.id,
-                name: message.sender.name,
-                content: message.content,
+            id: conversation.id,
+            name: conversation.name,
+            participants: conversation.participants.map((participant) => ({
+                userId: participant.user.id,
+                name: participant.user.name,
             })),
+
+            lastMesssage: conversation.messages[0]
+                ? {
+                    userId: conversation.messages[0].sender.id,
+                    name: conversation.messages[0].sender.name,
+                    content: conversation.messages[0].content,
+                }
+                : null,
         }));
 
         return res.status(200).json(formattedConversations);
+
     } catch (error) {
         console.error(error);
 
@@ -192,12 +205,7 @@ router.get("/:conversationId", async (req, res) => {
             });
         }
 
-        const formattedConversation = conversation.messages.map((message) => ({
-            userId: message.senderId,
-            content: message.content,
-        }));
-
-        return res.status(200).json(formattedConversation);
+        return res.status(200).json(conversation);
     } catch (error) {
         console.error(error);
         return res.status(500).json({
