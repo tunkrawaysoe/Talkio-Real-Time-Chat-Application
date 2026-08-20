@@ -1,7 +1,7 @@
 
 import express from "express";
 import prisma from "../lib/prisma.js";
-import { authenticate } from "../middleware/auth.middleware.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 
 const router = express.Router();
 
@@ -22,9 +22,8 @@ router.post("/", authenticate, async (req, res) => {
 
     try {
         const otherUser = await prisma.user.findUnique({
-            where: {
-                id: userId,
-            },
+            where: { id: userId },
+            select: { id: true },
         });
 
         if (!otherUser) {
@@ -33,30 +32,32 @@ router.post("/", authenticate, async (req, res) => {
             });
         }
 
-        const existingConversation =
-            await prisma.conversation.findFirst({
-                where: {
-                    AND: [
-                        {
-                            participants: {
-                                some: {
-                                    userId: req.userId,
-                                },
-                            },
+        const existingConversation = await prisma.conversation.findFirst({
+            where: {
+                AND: [
+                    {
+                        participants: {
+                            some: { userId: req.userId },
                         },
-                        {
-                            participants: {
-                                some: {
-                                    userId,
-                                },
-                            },
+                    },
+                    {
+                        participants: {
+                            some: { userId },
                         },
-                    ],
+                    },
+                ],
+            },
+            select: {
+                id: true,
+                createdAt: true,
+                participants: {
+                    select: {
+                        userId: true,
+                        joinedAt: true,
+                    },
                 },
-                include: {
-                    participants: true,
-                },
-            });
+            },
+        });
 
         if (existingConversation) {
             return res.status(200).json({
@@ -69,17 +70,20 @@ router.post("/", authenticate, async (req, res) => {
             data: {
                 participants: {
                     create: [
-                        {
-                            userId: req.userId,
-                        },
-                        {
-                            userId,
-                        },
+                        { userId: req.userId },
+                        { userId },
                     ],
                 },
             },
-            include: {
-                participants: true,
+            select: {
+                id: true,
+                createdAt: true,
+                participants: {
+                    select: {
+                        userId: true,
+                        joinedAt: true,
+                    },
+                },
             },
         });
 
@@ -95,4 +99,47 @@ router.post("/", authenticate, async (req, res) => {
     }
 });
 
+router.get("/:conversationId", async (req, res) => {
+    const id = Number(req.params.conversationId);
+
+    if (isNaN(id)) {
+        return res.status(400).json({
+            message: "Conversation ID must be a number",
+        });
+    }
+
+    try {
+        const conversation = await prisma.conversation.findUnique({
+            where: {
+                id,
+            },
+            select: {
+                messages: {
+                    select: {
+                        content: true,
+                        senderId: true,
+                    },
+                },
+            },
+        });
+
+        if (!conversation) {
+            return res.status(404).json({
+                message: "Conversation not found",
+            });
+        }
+
+        const formattedConversation = conversation.messages.map((message) => ({
+            userId: message.senderId,
+            content: message.content,
+        }));
+
+        return res.status(200).json(formattedConversation);
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({
+            message: "Failed to get messages",
+        });
+    }
+});
 export default router;
