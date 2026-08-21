@@ -3,15 +3,15 @@ import "./ChatPage.css";
 import ChatSide from "./ChatSide";
 import ChatMain from "./ChatMain";
 import socket from "../../../lib/socket.js";
+import { useSelector } from "react-redux";
 
 const Chat = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
-
-  const accessToken =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjExLCJpYXQiOjE3ODcyODYzNDEsImV4cCI6MTc4NzI4OTk0MX0.s0fdzLVshZytc2tGf8q35LOAnEeQxEGcy9lHsEwqLTw";
-
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
+  const accessToken = useSelector((state) => state.auth.accessToken);
+  const currentUserId = useSelector((state) => state.auth.user.id);
   const getConversationName = (conversation) => {
     return conversation.name || conversation.participants[0]?.name || "Unknown";
   };
@@ -69,8 +69,11 @@ const Chat = () => {
         console.error("Error fetching conversations:", error);
       }
     }
-
     fetchUserConversations();
+    socket.emit("online", currentUserId);
+    socket.on("online", (userIds) => {
+      setOnlineUserIds(userIds);
+    });
   }, []);
 
   return (
@@ -80,12 +83,14 @@ const Chat = () => {
         getConversationName={getConversationName}
         selectedConversation={selectedConversation}
         startConversation={startConversation}
+        onlineUserIds={onlineUserIds}
       />
 
       <ChatMain
         selectedConversation={selectedConversation}
         getConversationName={getConversationName}
         chatMessages={chatMessages}
+        onlineUserIds={onlineUserIds}
       />
     </div>
   );

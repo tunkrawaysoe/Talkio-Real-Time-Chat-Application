@@ -1,11 +1,16 @@
 import React from "react";
+import { useSelector } from "react-redux";
 
 const ChatMain = ({
   selectedConversation,
   getConversationName,
   chatMessages,
+  onlineUserIds,
 }) => {
-  const currentUserId = 11;
+  console.log(onlineUserIds);
+  const otherUserId = selectedConversation?.participants?.[0]?.userId;
+  const currentUserId = useSelector((state) => state.auth.user.id);
+  const isOnline = onlineUserIds.includes(otherUserId);
   return (
     <main className="chat-content">
       {selectedConversation ? (
@@ -20,7 +25,7 @@ const ChatMain = ({
             <div>
               <h3>{getConversationName(selectedConversation)}</h3>
 
-              <span>Online</span>
+              <span>{isOnline ? "Online" : ""}</span>
             </div>
           </header>
 
@@ -32,7 +37,6 @@ const ChatMain = ({
             ) : (
               chatMessages.map((message, index) => {
                 const isOwnMessage = message.senderId === currentUserId;
-
                 return (
                   <div
                     key={index}

@@ -82,7 +82,7 @@ router.post("/login", async (req, res) => {
             });
         }
 
-        const token = jwt.sign(
+        const accessToken = jwt.sign(
             {
                 userId: user.id,
             },
@@ -94,7 +94,7 @@ router.post("/login", async (req, res) => {
 
         return res.status(200).json({
             message: "Login successful",
-            token,
+            accessToken,
             user: {
                 id: user.id,
                 name: user.name,

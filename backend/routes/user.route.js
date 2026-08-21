@@ -1,6 +1,6 @@
 import express from "express";
 import prisma from "../lib/prisma.js";
-
+import { getIo } from "../lib/io.js";
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -12,4 +12,4 @@ router.get('/', async (req, res) => {
     }
 })
 
-export default  router;
+export default router;

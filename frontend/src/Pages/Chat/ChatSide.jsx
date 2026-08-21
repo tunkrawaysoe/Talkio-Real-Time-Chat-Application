@@ -5,6 +5,7 @@ const ChatSide = ({
   getConversationName,
   selectedConversation,
   startConversation,
+  onlineUserIds,
 }) => {
   return (
     <aside className="chat-sidebar">
@@ -15,7 +16,9 @@ const ChatSide = ({
       <div className="conversation-list">
         {conversations.map((conversation) => {
           const conversationName = getConversationName(conversation);
-
+          const otherUserId = conversation.participants?.[0]?.userId;
+          const isOnline = onlineUserIds.includes(otherUserId);
+          console.log(isOnline)
           return (
             <div
               key={conversation.id}
@@ -24,8 +27,12 @@ const ChatSide = ({
               }`}
               onClick={() => startConversation(conversation.id)}
             >
-              <div className="avatar">
-                {conversationName.charAt(0).toUpperCase()}
+              <div className="avatar-wrapper">
+                <div className="avatar">
+                  {conversationName.charAt(0).toUpperCase()}
+                </div>
+
+                {isOnline && <span className="online-dot"></span>}
               </div>
 
               <div className="conversation-info">
@@ -34,7 +41,7 @@ const ChatSide = ({
                 <p>{conversation.lastMessage?.content || "No messages yet"}</p>
               </div>
             </div>
-          );
+          );wrapper
         })}
       </div>
     </aside>
