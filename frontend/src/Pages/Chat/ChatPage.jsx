@@ -1,15 +1,16 @@
 import { useEffect, useState } from "react";
 import "./ChatPage.css";
+import ChatSide from "./ChatSide";
+import ChatMain from "./ChatMain";
+import socket from "../../../lib/socket.js";
 
 const Chat = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
 
-  const currentUserId = 11;
-
   const accessToken =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjEyLCJpYXQiOjE3ODcyMzYwODAsImV4cCI6MTc4NzIzOTY4MH0.SDlPaz2MjwVJgCA6bZ_afR1TNxN_sl3AmGUz2HGVlP8";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjExLCJpYXQiOjE3ODcyODYzNDEsImV4cCI6MTc4NzI4OTk0MX0.s0fdzLVshZytc2tGf8q35LOAnEeQxEGcy9lHsEwqLTw";
 
   const getConversationName = (conversation) => {
     return conversation.name || conversation.participants[0]?.name || "Unknown";
@@ -74,91 +75,18 @@ const Chat = () => {
 
   return (
     <div className="chat-page">
-      <aside className="chat-sidebar">
-        <div className="sidebar-header">
-          <h2>Messages</h2>
-        </div>
+      <ChatSide
+        conversations={conversations}
+        getConversationName={getConversationName}
+        selectedConversation={selectedConversation}
+        startConversation={startConversation}
+      />
 
-        <div className="conversation-list">
-          {conversations.map((conversation) => {
-            const conversationName = getConversationName(conversation);
-
-            return (
-              <div
-                key={conversation.id}
-                className={`conversation-item ${
-                  selectedConversation?.id === conversation.id ? "active" : ""
-                }`}
-                onClick={() => startConversation(conversation.id)}
-              >
-                <div className="avatar">
-                  {conversationName.charAt(0).toUpperCase()}
-                </div>
-
-                <div className="conversation-info">
-                  <h3>{conversationName}</h3>
-
-                  <p>
-                    {conversation.lastMessage?.content || "No messages yet"}
-                  </p>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </aside>
-
-      <main className="chat-content">
-        {selectedConversation ? (
-          <>
-            <header className="chat-header">
-              <div className="avatar">
-                {getConversationName(selectedConversation)
-                  .charAt(0)
-                  .toUpperCase()}
-              </div>
-
-              <div>
-                <h3>{getConversationName(selectedConversation)}</h3>
-
-                <span>Online</span>
-              </div>
-            </header>
-
-            <div className="message-list">
-              {chatMessages.length === 0 ? (
-                <div className="no-messages">
-                  <p>No messages yet</p>
-                </div>
-              ) : (
-                chatMessages.map((message, index) => {
-                  const isOwnMessage = message.senderId === currentUserId;
-
-                  return (
-                    <div
-                      key={index}
-                      className={`message ${isOwnMessage ? "sent" : "received"}`}
-                    >
-                      <p>{message.content}</p>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            <form className="message-form">
-              <input type="text" placeholder="Type a message..." />
-
-              <button type="submit">Send</button>
-            </form>
-          </>
-        ) : (
-          <div className="empty-chat">
-            <h2>Select a conversation</h2>
-            <p>Choose a conversation to start chatting.</p>
-          </div>
-        )}
-      </main>
+      <ChatMain
+        selectedConversation={selectedConversation}
+        getConversationName={getConversationName}
+        chatMessages={chatMessages}
+      />
     </div>
   );
 };
