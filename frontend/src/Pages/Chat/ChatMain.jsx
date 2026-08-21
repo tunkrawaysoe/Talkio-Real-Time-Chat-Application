@@ -1,5 +1,6 @@
-import React from "react";
+import { useState } from "react";
 import { useSelector } from "react-redux";
+import socket from "../../../lib/socket.js";
 
 const ChatMain = ({
   selectedConversation,
@@ -7,10 +8,41 @@ const ChatMain = ({
   chatMessages,
   onlineUserIds,
 }) => {
-  console.log(onlineUserIds);
   const otherUserId = selectedConversation?.participants?.[0]?.userId;
-  const currentUserId = useSelector((state) => state.auth.user.id);
+  const currentUserId = useSelector((state) => state.auth.user?.id);
+  const accessToken = useSelector((state) => state.auth.accessToken);
   const isOnline = onlineUserIds.includes(otherUserId);
+  const conversationId = selectedConversation?.id;
+  const [message, setMessage] = useState("");
+
+  async function sendMessage(e) {
+    e.preventDefault();
+    if (!message.trim()) return;
+    try {
+      const response = await fetch(
+        `http://localhost:4000/api/message/${conversationId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            content: message,
+          }),
+        },
+      );
+      socket
+
+      if (!response.ok) {
+        throw new Error("Failed to send message");
+      }
+      const data = await response.json();
+      setMessage("");
+    } catch (error) {
+      console.error("Error sending message:", error);
+    }
+  }
   return (
     <main className="chat-content">
       {selectedConversation ? (
@@ -49,9 +81,13 @@ const ChatMain = ({
             )}
           </div>
 
-          <form className="message-form">
-            <input type="text" placeholder="Type a message..." />
-
+          <form className="message-form" onSubmit={sendMessage}>
+            <input
+              type="text"
+              placeholder="Type a message..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
             <button type="submit">Send</button>
           </form>
         </>

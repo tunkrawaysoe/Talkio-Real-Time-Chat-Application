@@ -4,14 +4,16 @@ import ChatSide from "./ChatSide";
 import ChatMain from "./ChatMain";
 import socket from "../../../lib/socket.js";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 const Chat = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [onlineUserIds, setOnlineUserIds] = useState([]);
+  const navigate = useNavigate();
   const accessToken = useSelector((state) => state.auth.accessToken);
-  const currentUserId = useSelector((state) => state.auth.user.id);
+  const currentUserId = useSelector((state) => state.auth.user?.id);
   const getConversationName = (conversation) => {
     return conversation.name || conversation.participants[0]?.name || "Unknown";
   };
@@ -49,6 +51,11 @@ const Chat = () => {
     }
   }
   useEffect(() => {
+    if (!accessToken) {
+      navigate("/login");
+      return;
+    }
+
     async function fetchUserConversations() {
       try {
         const response = await fetch("http://localhost:4000/api/conversation", {
@@ -63,18 +70,25 @@ const Chat = () => {
         }
 
         const data = await response.json();
-
         setConversations(data);
       } catch (error) {
         console.error("Error fetching conversations:", error);
       }
     }
-    fetchUserConversations();
-    socket.emit("online", currentUserId);
-    socket.on("online", (userIds) => {
+
+    const handleOnlineUsers = (userIds) => {
       setOnlineUserIds(userIds);
-    });
-  }, []);
+    };
+
+    fetchUserConversations();
+
+    socket.emit("online", currentUserId);
+    socket.on("online", handleOnlineUsers);
+
+    return () => {
+      socket.off("online", handleOnlineUsers);
+    };
+  }, [accessToken, currentUserId, navigate]);
 
   return (
     <div className="chat-page">
