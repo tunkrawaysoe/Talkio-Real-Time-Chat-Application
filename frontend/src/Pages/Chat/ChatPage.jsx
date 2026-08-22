@@ -18,15 +18,12 @@ const Chat = () => {
 
   async function fetchUserConversations() {
     try {
-      const response = await fetch(
-        "http://localhost:4000/api/conversation",
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
+      const response = await fetch("http://localhost:4000/api/conversation", {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
         },
-      );
+      });
 
       if (!response.ok) {
         throw new Error("Failed to fetch conversations");
@@ -56,6 +53,12 @@ const Chat = () => {
       }
 
       const data = await response.json();
+
+      if (selectedConversationId) {
+        socket.emit("leave_conversation", selectedConversationId);
+      }
+
+      socket.emit("join_conversation", conversationId);
 
       setSelectedConversationId(conversationId);
       setChatMessages(data.messages);

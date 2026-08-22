@@ -15,8 +15,14 @@ export const startSocketServer = (httpServer) => {
         socket.on('online', (userId) => {
             socket.userId = userId
             onlineUserIds.add(userId)
-            console.log(Array.from(onlineUserIds))
             io.emit('online', Array.from(onlineUserIds));
+            socket.join(`user:${userId}`)
+        })
+        socket.on('join_conversation', (id) => {
+            socket.join(`conversation:${id}`)
+        })
+        socket.on('leave_conversation', (id) => {
+            socket.leave(`conversation:${id}`)
         })
 
         socket.on("disconnect", () => {
