@@ -1,14 +1,44 @@
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 
 const ChatSide = ({
+  fetchUserConversations,
   conversations,
-  getConversationName,
-  selectedConversation,
+  selectedConversationId,
   startConversation,
   onlineUserIds,
 }) => {
   const [search, setSearch] = useState("");
   const [searchUser, setSearchUser] = useState({});
+  const accessToken = useSelector((state) => state.auth.accessToken);
+
+  async function createConversation() {
+    try {
+      const response = await fetch("http://localhost:4000/api/conversation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          userId: searchUser.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create conversation");
+      }
+      fetchUserConversations();
+      startConversation(data.conversation.id);
+      setSearch("");
+      setSearchUser({});
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+    }
+  }
+
   useEffect(() => {
     if (!search.trim()) {
       setSearchUser({});
@@ -37,7 +67,8 @@ const ChatSide = ({
     }
 
     findUser();
-  }, [search]); 
+  }, [search]);
+
   return (
     <aside className="chat-sidebar">
       <div className="sidebar-header">
@@ -51,15 +82,16 @@ const ChatSide = ({
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
+
         {search.trim() && searchUser?.id && (
           <div className="search-result-container">
-            <div className="search-result">
+            <div className="search-result" onClick={createConversation}>
               <div className="avatar">
-                {searchUser.name.charAt(0).toUpperCase()}
+                {searchUser?.name?.charAt(0).toUpperCase()}
               </div>
 
               <div className="search-result-info">
-                <h3>{searchUser.name}</h3>
+                <h3>{searchUser?.name}</h3>
               </div>
             </div>
           </div>
@@ -68,8 +100,10 @@ const ChatSide = ({
 
       <div className="conversation-list">
         {conversations.map((conversation) => {
-          const conversationName = getConversationName(conversation);
-          const otherUserId = conversation.participants?.[0]?.userId;
+          const otherUser = conversation?.participants?.[0];
+
+          const otherUserId = otherUser?.userId;
+          const conversationName = otherUser?.name || "Unknown";
 
           const isOnline = onlineUserIds.includes(otherUserId);
 
@@ -77,7 +111,7 @@ const ChatSide = ({
             <div
               key={conversation.id}
               className={`conversation-item ${
-                selectedConversation?.id === conversation.id ? "active" : ""
+                selectedConversationId === conversation.id ? "active" : ""
               }`}
               onClick={() => startConversation(conversation.id)}
             >

@@ -3,24 +3,30 @@ import { useSelector } from "react-redux";
 import socket from "../../../lib/socket.js";
 
 const ChatMain = ({
-  selectedConversation,
-  getConversationName,
+  selectedConversationId,
   chatMessages,
+  conversations,
   onlineUserIds,
 }) => {
-  const otherUserId = selectedConversation?.participants?.[0]?.userId;
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const accessToken = useSelector((state) => state.auth.accessToken);
-  const isOnline = onlineUserIds.includes(otherUserId);
-  const conversationId = selectedConversation?.id;
   const [message, setMessage] = useState("");
+
+  const conversation = conversations.find(
+    (conversation) => conversation.id === selectedConversationId,
+  );
+
+  const otherUser = conversation?.participants?.[0];
+
+  const isOnline = otherUser ? onlineUserIds.includes(otherUser.userId) : false;
 
   async function sendMessage(e) {
     e.preventDefault();
     if (!message.trim()) return;
+
     try {
       const response = await fetch(
-        `http://localhost:4000/api/message/${conversationId}`,
+        `http://localhost:4000/api/message/${selectedConversationId}`,
         {
           method: "POST",
           headers: {
@@ -32,31 +38,29 @@ const ChatMain = ({
           }),
         },
       );
-      socket
 
       if (!response.ok) {
         throw new Error("Failed to send message");
       }
-      const data = await response.json();
+
+      await response.json();
       setMessage("");
     } catch (error) {
       console.error("Error sending message:", error);
     }
   }
+
   return (
     <main className="chat-content">
-      {selectedConversation ? (
+      {selectedConversationId ? (
         <>
           <header className="chat-header">
             <div className="avatar">
-              {getConversationName(selectedConversation)
-                .charAt(0)
-                .toUpperCase()}
+              {otherUser?.name?.charAt(0).toUpperCase()}
             </div>
 
             <div>
-              <h3>{getConversationName(selectedConversation)}</h3>
-
+              <h3>{otherUser?.name}</h3>
               <span>{isOnline ? "Online" : ""}</span>
             </div>
           </header>
@@ -69,9 +73,10 @@ const ChatMain = ({
             ) : (
               chatMessages.map((message, index) => {
                 const isOwnMessage = message.senderId === currentUserId;
+
                 return (
                   <div
-                    key={index}
+                    key={message.id || index}
                     className={`message ${isOwnMessage ? "sent" : "received"}`}
                   >
                     <p>{message.content}</p>
@@ -88,6 +93,7 @@ const ChatMain = ({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
+
             <button type="submit">Send</button>
           </form>
         </>
