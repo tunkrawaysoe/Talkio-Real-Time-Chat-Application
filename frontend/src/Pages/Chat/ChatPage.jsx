@@ -10,7 +10,7 @@ const Chat = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
-  const [onlineUserIds, setOnlineUserIds] = useState([]);္
+  const [onlineUserIds, setOnlineUserIds] = useState([]);
   const accessToken = useSelector((state) => state.auth.accessToken);
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const navigate = useNavigate();

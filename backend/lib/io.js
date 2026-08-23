@@ -24,6 +24,17 @@ export const startSocketServer = (httpServer) => {
         socket.on('leave_conversation', (id) => {
             socket.leave(`conversation:${id}`)
         })
+        socket.on("typing", (conversationId) => {
+            socket
+                .to(`conversation:${conversationId}`)
+                .emit("typing", socket.userId);
+        });
+
+        socket.on("stop_typing", (conversationId) => {
+            socket
+                .to(`conversation:${conversationId}`)
+                .emit("stop_typing", socket.userId);
+        });
 
         socket.on("disconnect", () => {
             if (socket.userId) {

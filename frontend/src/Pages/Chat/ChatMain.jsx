@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import socket from "../../../lib/socket.js";
 
@@ -11,6 +11,8 @@ const ChatMain = ({
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const accessToken = useSelector((state) => state.auth.accessToken);
   const [message, setMessage] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
 
   const conversation = conversations.find(
     (conversation) => conversation.id === selectedConversationId,
@@ -19,8 +21,47 @@ const ChatMain = ({
   const otherUser = conversation?.participants?.[0];
   const isOnline = otherUser ? onlineUserIds.includes(otherUser.userId) : false;
 
+  function handleTyping() {
+    if (!conversation) return;
+    socket.emit("typing", conversation.id);
+
+    clearTimeout(typingTimeoutRef.current);
+
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stop_typing", conversation.id);
+    }, 1000);
+  }
+
+  useEffect(() => {
+    if (!selectedConversationId) return;
+
+    function handleTyping(userId) {
+      if (userId === otherUser?.userId) {
+        console.log(userId)
+        setIsTyping(true);
+      }
+    }
+
+    function handleStopTyping(userId) {
+      if (userId === otherUser?.userId) {
+        setIsTyping(false);
+      }
+    }
+
+    socket.on("typing", handleTyping);
+    socket.on("stop_typing", handleStopTyping);
+
+    return () => {
+      socket.off("typing", handleTyping);
+      socket.off("stop_typing", handleStopTyping);
+
+      clearTimeout(typingTimeoutRef.current);
+    };
+  }, [selectedConversationId]);
+
   async function sendMessage(e) {
     e.preventDefault();
+
     if (!message.trim()) return;
 
     try {
@@ -43,7 +84,15 @@ const ChatMain = ({
       }
 
       await response.json();
+
       setMessage("");
+      clearTimeout(typingTimeoutRef.current);
+
+      if (conversation) {
+        socket.emit("stop_typing", conversation.id);
+      }
+
+      setIsTyping(false);
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -83,6 +132,12 @@ const ChatMain = ({
                 );
               })
             )}
+
+            {isTyping && (
+              <div className="typing-indicator">
+                <p>{otherUser?.name} is typing...</p>
+              </div>
+            )}
           </div>
 
           <form className="message-form" onSubmit={sendMessage}>
@@ -90,7 +145,10 @@ const ChatMain = ({
               type="text"
               placeholder="Type a message..."
               value={message}
-              onChange={(e) => setMessage(e.target.value)}
+              onChange={(e) => {
+                setMessage(e.target.value);
+                handleTyping();
+              }}
             />
 
             <button type="submit">Send</button>
