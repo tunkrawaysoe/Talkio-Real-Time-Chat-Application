@@ -10,8 +10,7 @@ const Chat = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
-  const [onlineUserIds, setOnlineUserIds] = useState([]);
-
+  const [onlineUserIds, setOnlineUserIds] = useState([]);္
   const accessToken = useSelector((state) => state.auth.accessToken);
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const navigate = useNavigate();
@@ -59,7 +58,6 @@ const Chat = () => {
       }
 
       socket.emit("join_conversation", conversationId);
-
       setSelectedConversationId(conversationId);
       setChatMessages(data.messages);
     } catch (error) {
@@ -78,6 +76,32 @@ const Chat = () => {
       setOnlineUserIds(userIds);
     };
 
+    const handleNewMessageNotification = (message) => {
+      setConversations((prev) =>
+        prev.map((prevConversation) =>
+          prevConversation.id === message.conversationId
+            ? {
+                ...prevConversation,
+                lastMessage: {
+                  ...prevConversation.lastMessage,
+                  content: message.content,
+                },
+              }
+            : prevConversation,
+        ),
+      );
+    };
+
+    const handleNewChatMessage = (message) => {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          content: message.content,
+          senderId: message.senderId,
+        },
+      ]);
+    };
+
     fetchUserConversations();
 
     if (currentUserId) {
@@ -85,9 +109,13 @@ const Chat = () => {
     }
 
     socket.on("online", handleOnlineUsers);
+    socket.on("new_message_notification", handleNewMessageNotification);
+    socket.on("new_message", handleNewChatMessage);
 
     return () => {
       socket.off("online", handleOnlineUsers);
+      socket.off("new_message_notification", handleNewMessageNotification);
+      socket.off("new_message", handleNewChatMessage);
     };
   }, [accessToken, currentUserId, navigate]);
 

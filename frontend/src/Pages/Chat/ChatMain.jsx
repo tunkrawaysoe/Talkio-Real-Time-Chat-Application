@@ -17,7 +17,6 @@ const ChatMain = ({
   );
 
   const otherUser = conversation?.participants?.[0];
-
   const isOnline = otherUser ? onlineUserIds.includes(otherUser.userId) : false;
 
   async function sendMessage(e) {
