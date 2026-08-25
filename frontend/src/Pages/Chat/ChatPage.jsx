@@ -50,16 +50,13 @@ const Chat = () => {
       if (!response.ok) {
         throw new Error("Failed to fetch messages");
       }
-
-      const data = await response.json();
-
       if (selectedConversationId) {
         socket.emit("leave_conversation", selectedConversationId);
       }
 
       socket.emit("join_conversation", conversationId);
       setSelectedConversationId(conversationId);
-      setChatMessages(data.messages);
+      setChatMessages(await response.json());
     } catch (error) {
       console.error("Error fetching messages:", error);
       setChatMessages([]);

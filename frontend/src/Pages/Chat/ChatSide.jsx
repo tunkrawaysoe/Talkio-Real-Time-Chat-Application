@@ -106,7 +106,7 @@ const ChatSide = ({
           const conversationName = otherUser?.name || "Unknown";
 
           const isOnline = onlineUserIds.includes(otherUserId);
-
+  
           return (
             <div
               key={conversation.id}

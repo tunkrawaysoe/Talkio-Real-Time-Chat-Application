@@ -114,32 +114,35 @@ router.get("/", authenticate, async (req, res) => {
             select: {
                 id: true,
                 name: true,
+
                 participants: {
                     where: {
                         userId: {
-                            not: userId
-                        }
+                            not: userId,
+                        },
                     },
                     select: {
                         user: {
                             select: {
                                 id: true,
-                                name: true
-                            }
-                        }
-                    }
+                                name: true,
+                                imageUrl: true,
+                            },
+                        },
+                    },
                 },
+
                 messages: {
                     orderBy: {
-                        createdAt: "desc"
+                        createdAt: "desc",
                     },
                     take: 1,
                     select: {
                         sender: {
                             select: {
                                 id: true,
-                                name: true
-                            }
+                                name: true,
+                            },
                         },
                         content: true,
                     },
@@ -150,12 +153,14 @@ router.get("/", authenticate, async (req, res) => {
         const formattedConversations = conversations.map((conversation) => ({
             id: conversation.id,
             name: conversation.name,
+
             participants: conversation.participants.map((participant) => ({
                 userId: participant.user.id,
                 name: participant.user.name,
+                imageUrl: participant.user.imageUrl,
             })),
 
-            lastMesssage: conversation.messages[0]
+            lastMessage: conversation.messages[0]
                 ? {
                     userId: conversation.messages[0].sender.id,
                     name: conversation.messages[0].sender.name,
@@ -193,7 +198,13 @@ router.get("/:conversationId", async (req, res) => {
                 messages: {
                     select: {
                         content: true,
-                        senderId: true,
+                        sender: {
+                            select: {
+                                id: true,
+                                name: true,
+                                imageUrl: true
+                            }
+                        }
                     },
                 },
             },
@@ -204,8 +215,16 @@ router.get("/:conversationId", async (req, res) => {
                 message: "Conversation not found",
             });
         }
+        const formattedConversations = conversation.messages.map(message => {
+            return {
+                content: message.content,
+                senderId: message.sender.id,
+                name: message.sender.name,
+                imageUrl: message.sender.imageUrl
+            }
+        })
 
-        return res.status(200).json(conversation);
+        return res.status(200).json(formattedConversations);
     } catch (error) {
         console.error(error);
         return res.status(500).json({

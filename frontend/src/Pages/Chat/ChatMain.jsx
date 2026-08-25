@@ -13,6 +13,7 @@ const ChatMain = ({
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef(null);
+  console.log(chatMessages);
 
   const conversation = conversations.find(
     (conversation) => conversation.id === selectedConversationId,
@@ -37,7 +38,7 @@ const ChatMain = ({
 
     function handleTyping(userId) {
       if (userId === otherUser?.userId) {
-        console.log(userId)
+        console.log(userId);
         setIsTyping(true);
       }
     }
@@ -104,7 +105,11 @@ const ChatMain = ({
         <>
           <header className="chat-header">
             <div className="avatar">
-              {otherUser?.name?.charAt(0).toUpperCase()}
+              {otherUser?.imageUrl ? (
+                <img src={otherUser.imageUrl} alt={otherUser.name} />
+              ) : (
+                otherUser?.name?.charAt(0).toUpperCase()
+              )}
             </div>
 
             <div>
@@ -127,7 +132,24 @@ const ChatMain = ({
                     key={message.id || index}
                     className={`message ${isOwnMessage ? "sent" : "received"}`}
                   >
-                    <p>{message.content}</p>
+                    {isOwnMessage ? (
+                      <p>{message.content}</p>
+                    ) : (
+                      <div className="message-user">
+                        <div className="message-avatar">
+                          {message.imageUrl ? (
+                            <img src={message.imageUrl} alt={message.name} />
+                          ) : (
+                            message.name?.charAt(0).toUpperCase()
+                          )}
+                        </div>
+
+                        <div>
+                          <span className="message-name">{message.name}</span>
+                          <p>{message.content}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })

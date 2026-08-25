@@ -11,8 +11,9 @@ model User {
   id       Int    @id @default(autoincrement())
   name     String
   userName String @unique
+  imageUrl String?
   password String
-
+  
   participants ConversationParticipant[]
   messages     Message[]
 

@@ -1,6 +1,6 @@
 import express from "express";
 import prisma from "../lib/prisma.js";
-import { getIo } from "../lib/io.js";
+import { authenticate } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 router.get('/', async (req, res) => {
@@ -42,6 +42,72 @@ router.get("/search", async (req, res) => {
         console.error(error);
         return res.status(500).json({
             message: "Failed to search user",
+        });
+    }
+});
+
+router.get('/profile', authenticate, async (req, res) => {
+    const id = req.userId;
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: {
+                id
+            },
+            select: {
+                id: true,
+                name: true,
+                userName: true,
+                imageUrl: true,
+            }
+        })
+        res.status(200).json(user)
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Internal server error" })
+    }
+})
+
+router.patch("/profile", authenticate, async (req, res) => {
+    const id = req.userId;
+
+    const { name, userName, imageUrl } = req.body;
+
+    try {
+        const updatedUser = await prisma.user.update({
+            where: {
+                id,
+            },
+            data: {
+                ...(name !== undefined && { name }),
+                ...(userName !== undefined && { userName }),
+                ...(imageUrl !== undefined && { imageUrl }),
+            },
+            select: {
+                id: true,
+                name: true,
+                userName: true,
+                imageUrl: true,
+                createdAt: true,
+            },
+
+        });
+
+        return res.status(200).json({
+            message: "Profile updated successfully",
+            user: updatedUser,
+        });
+    } catch (error) {
+        console.error(error);
+
+        if (error.code === "P2002") {
+            return res.status(409).json({
+                message: "Username already exists",
+            });
+        }
+
+        return res.status(500).json({
+            message: "Failed to update profile",
         });
     }
 });
