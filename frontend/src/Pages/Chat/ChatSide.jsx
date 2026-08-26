@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
+import { FiMenu, FiUser, FiLogOut } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 const ChatSide = ({
   fetchUserConversations,
@@ -10,7 +12,9 @@ const ChatSide = ({
 }) => {
   const [search, setSearch] = useState("");
   const [searchUser, setSearchUser] = useState({});
+  const [isShowMenu, setIsShowMenu] = useState(false);
   const accessToken = useSelector((state) => state.auth.accessToken);
+  const navigate = useNavigate();
 
   async function createConversation() {
     try {
@@ -72,15 +76,46 @@ const ChatSide = ({
   return (
     <aside className="chat-sidebar">
       <div className="sidebar-header">
-        <h2>Messages</h2>
+        <div className="search-container">
+          <div className="menu-container">
+            <button
+              className="menu-button"
+              onClick={() => setIsShowMenu((prev) => !prev)}
+            >
+              <FiMenu size={22} />
+            </button>
 
-        <div className="user-search">
-          <input
-            type="text"
-            placeholder="Search users..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+            {isShowMenu && (
+              <div className="menu-dropdown">
+                <button
+                  onClick={() => {
+                    navigate("/profile");
+                    setIsShowMenu(false);
+                  }}
+                >
+                  <FiUser size={18} />
+                  <span>Profile</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setIsShowMenu(false);
+                  }}
+                >
+                  <FiLogOut size={18} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="user-search">
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
         </div>
 
         {search.trim() && searchUser?.id && (
@@ -101,12 +136,10 @@ const ChatSide = ({
       <div className="conversation-list">
         {conversations.map((conversation) => {
           const otherUser = conversation?.participants?.[0];
-
           const otherUserId = otherUser?.userId;
           const conversationName = otherUser?.name || "Unknown";
-
           const isOnline = onlineUserIds.includes(otherUserId);
-  
+
           return (
             <div
               key={conversation.id}

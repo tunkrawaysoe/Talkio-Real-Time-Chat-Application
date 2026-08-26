@@ -21,17 +21,6 @@ router.post("/", authenticate, async (req, res) => {
     }
 
     try {
-        const otherUser = await prisma.user.findUnique({
-            where: { id: userId },
-            select: { id: true },
-        });
-
-        if (!otherUser) {
-            return res.status(404).json({
-                message: "User not found",
-            });
-        }
-
         const existingConversation = await prisma.conversation.findFirst({
             where: {
                 AND: [
