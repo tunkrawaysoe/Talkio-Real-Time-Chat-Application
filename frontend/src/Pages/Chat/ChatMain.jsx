@@ -8,10 +8,10 @@ const ChatMain = ({
   conversations,
   onlineUserIds,
 }) => {
-  const currentUserId = useSelector((state) => state.auth.user?.id);
-  const accessToken = useSelector((state) => state.auth.accessToken);
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const currentUserId = useSelector((state) => state.auth.user?.id);
+  const accessToken = useSelector((state) => state.auth.accessToken);
   const typingTimeoutRef = useRef(null);
   console.log(chatMessages);
 
@@ -38,7 +38,6 @@ const ChatMain = ({
 
     function handleTyping(userId) {
       if (userId === otherUser?.userId) {
-        console.log(userId);
         setIsTyping(true);
       }
     }
@@ -55,7 +54,6 @@ const ChatMain = ({
     return () => {
       socket.off("typing", handleTyping);
       socket.off("stop_typing", handleStopTyping);
-
       clearTimeout(typingTimeoutRef.current);
     };
   }, [selectedConversationId]);
@@ -124,12 +122,12 @@ const ChatMain = ({
                 <p>No messages yet</p>
               </div>
             ) : (
-              chatMessages.map((message, index) => {
+              chatMessages.map((message) => {
                 const isOwnMessage = message.senderId === currentUserId;
 
                 return (
                   <div
-                    key={message.id || index}
+                    key={message.id}
                     className={`message ${isOwnMessage ? "sent" : "received"}`}
                   >
                     {isOwnMessage ? (

@@ -57,6 +57,7 @@ const Chat = () => {
       socket.emit("join_conversation", conversationId);
       setSelectedConversationId(conversationId);
       setChatMessages(await response.json());
+      
     } catch (error) {
       console.error("Error fetching messages:", error);
       setChatMessages([]);

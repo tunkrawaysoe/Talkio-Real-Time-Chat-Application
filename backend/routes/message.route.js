@@ -1,5 +1,5 @@
 import express from "express";
-import { authenticate } from "../middlewares/auth.middleware.js";
+import { authenticate, isOwnMessage } from "../middlewares/auth.middleware.js";
 import prisma from "../lib/prisma.js";
 import { getIo } from "../lib/io.js";
 const router = express.Router();
@@ -59,11 +59,9 @@ router.post("/:conversationId", authenticate, async (req, res) => {
                 .in(`user:${participant.userId}`)
                 .fetchSockets();
 
-            const isInConversation = sockets.some((socket) => {
-                return socket.rooms.has(
-                    `conversation:${conversationId}`
-                );
-            });
+            const isInConversation = sockets.some((socket) =>
+                socket.rooms.has(`conversation:${conversationId}`)
+            );
 
             if (!isInConversation) {
                 io.to(`user:${participant.userId}`).emit(
@@ -85,6 +83,23 @@ router.post("/:conversationId", authenticate, async (req, res) => {
         return res.status(500).json({
             message: "Failed to send message",
         });
+    }
+});
+
+router.delete("/:messageId", authenticate, isOwnMessage, async (req, res) => {
+    const id = Number(req.params.messageId);
+
+    try {
+        await prisma.message.delete({
+            where: {
+                id
+            }
+        });
+
+        return res.sendStatus(200);
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
     }
 });
 export default router;
