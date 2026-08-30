@@ -6,6 +6,7 @@ import conversationRoute from './routes/conversation.route.js'
 import messageRoute from './routes/message.route.js';
 import userRoute from './routes/user.route.js'
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import { startSocketServer } from "./lib/io.js";
 dotenv.config();
 
@@ -18,9 +19,11 @@ startSocketServer(httpServer);
 app.use(
     cors({
         origin: "http://localhost:5173",
+        credentials: true,
     })
 );
 app.use(express.json());
+app.use(cookieParser());
 app.use('/api/auth', authRoute)
 app.use('/api/conversation', conversationRoute)
 app.use('/api/message', messageRoute)

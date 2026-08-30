@@ -8,26 +8,40 @@ generator client {
 }
 
 model User {
-  id       Int    @id @default(autoincrement())
+  id       Int     @id @default(autoincrement())
   name     String
-  userName String @unique
+  userName String  @unique
   imageUrl String?
   password String
-  
+
   participants ConversationParticipant[]
   messages     Message[]
 
-  createdAt DateTime @default(now())
+  createdAt     DateTime       @default(now())
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id     Int    @id @default(autoincrement())
+  token  String @unique
+  userId Int
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@map("refresh_tokens")
 }
 
 model Conversation {
-  id           Int                       @id @default(autoincrement())
-  name         String?
-  
+  id   Int     @id @default(autoincrement())
+  name String?
+
   participants ConversationParticipant[]
   messages     Message[]
 
   createdAt DateTime @default(now())
+
+  @@map("conversations")
 }
 
 model ConversationParticipant {
@@ -40,6 +54,7 @@ model ConversationParticipant {
   joinedAt DateTime @default(now())
 
   @@id([conversationId, userId])
+  @@map("conversation_participants")
 }
 
 model Message {
@@ -53,4 +68,6 @@ model Message {
   sender       User         @relation(fields: [senderId], references: [id])
 
   createdAt DateTime @default(now())
+
+  @@map("messages")
 }
