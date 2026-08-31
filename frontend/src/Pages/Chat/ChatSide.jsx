@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { FiMenu, FiUser, FiLogOut } from "react-icons/fi";
+import { FiMenu, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 const ChatSide = ({
@@ -95,15 +95,6 @@ const ChatSide = ({
                 >
                   <FiUser size={18} />
                   <span>Profile</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    setIsShowMenu(false);
-                  }}
-                >
-                  <FiLogOut size={18} />
-                  <span>Logout</span>
                 </button>
               </div>
             )}

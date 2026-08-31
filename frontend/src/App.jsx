@@ -1,11 +1,12 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
+import { Routes, Route } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { login, authFailed } from "./store/authSlice.js";
 import Chat from "./Pages/Chat/ChatPage";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./Pages/Auth/Login";
 import Signup from "./Pages/Auth/Register";
 import ProfilePage from "./Pages/Profile/ProfilePage";
-import { useDispatch, useSelector } from "react-redux";
-import { login } from "./store/authSlice.js";
+import ProtectedRoute from "./Components/ProtectedRoute";
 
 const App = () => {
   const isLoading = useSelector((state) => state.auth.loading);
@@ -19,12 +20,16 @@ const App = () => {
           credentials: "include",
         });
 
-        if (!response.ok) return;
+        if (!response.ok) {
+          dispatch(authFailed());
+          return;
+        }
 
         const data = await response.json();
         dispatch(login(data));
       } catch (error) {
         console.error(error);
+        dispatch(authFailed());
       }
     }
 
@@ -36,14 +41,27 @@ const App = () => {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/" element={<Chat />} />
-        <Route path="/profile" element={<ProfilePage />} />
-      </Routes>
-    </BrowserRouter>
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/signup" element={<Signup />} />
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <Chat />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
   );
 };
 
