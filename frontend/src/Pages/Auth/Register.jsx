@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import api from "../../../lib/axios";
 import "./Auth.css";
 
 const Signup = () => {
@@ -12,20 +13,11 @@ const Signup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch(
-      "http://localhost:4000/api/auth/register",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      }
-    );
-
-    const data = await response.json();
-
-    console.log(data);
+    try {
+      await api.post("/auth/register", form);
+    } catch (error) {
+      console.error("Register error:", error);
+    }
   };
 
   return (
@@ -33,9 +25,7 @@ const Signup = () => {
       <div className="auth-card">
         <h1>Create Account</h1>
 
-        <p className="auth-subtitle">
-          Sign up to start chatting
-        </p>
+        <p className="auth-subtitle">Sign up to start chatting</p>
 
         <form className="auth-form" onSubmit={handleSubmit}>
           <div className="auth-field">
@@ -92,8 +82,7 @@ const Signup = () => {
         </form>
 
         <p className="auth-footer">
-          Already have an account?{" "}
-          <Link to="/login">Login</Link>
+          Already have an account? <Link to="/login">Login</Link>
         </p>
       </div>
     </div>

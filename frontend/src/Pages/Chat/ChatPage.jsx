@@ -5,31 +5,20 @@ import ChatMain from "./ChatMain";
 import socket from "../../../lib/socket.js";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import api from "../../../lib/axios.js";
 
 const Chat = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedConversationId, setSelectedConversationId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [onlineUserIds, setOnlineUserIds] = useState([]);
-  const accessToken = useSelector((state) => state.auth.accessToken);
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const navigate = useNavigate();
 
   async function fetchUserConversations() {
     try {
-      const response = await fetch("http://localhost:4000/api/conversation", {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch conversations");
-      }
-
-      const data = await response.json();
-      setConversations(data);
+      const response = await api.get("/conversation");
+      setConversations(response.data);
     } catch (error) {
       console.error("Error fetching conversations:", error);
     }
@@ -37,27 +26,15 @@ const Chat = () => {
 
   async function startConversation(conversationId) {
     try {
-      const response = await fetch(
-        `http://localhost:4000/api/conversation/${conversationId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      );
+      const response = await api.get(`/conversation/${conversationId}`);
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch messages");
-      }
       if (selectedConversationId) {
         socket.emit("leave_conversation", selectedConversationId);
       }
 
       socket.emit("join_conversation", conversationId);
       setSelectedConversationId(conversationId);
-      setChatMessages(await response.json());
-      
+      setChatMessages(response.data);
     } catch (error) {
       console.error("Error fetching messages:", error);
       setChatMessages([]);
@@ -65,11 +42,6 @@ const Chat = () => {
   }
 
   useEffect(() => {
-    if (!accessToken) {
-      navigate("/login");
-      return;
-    }
-
     const handleOnlineUsers = (userIds) => {
       setOnlineUserIds(userIds);
     };
@@ -115,7 +87,7 @@ const Chat = () => {
       socket.off("new_message_notification", handleNewMessageNotification);
       socket.off("new_message", handleNewChatMessage);
     };
-  }, [accessToken, currentUserId, navigate]);
+  }, [currentUserId, navigate]);
 
   return (
     <div className="chat-page">

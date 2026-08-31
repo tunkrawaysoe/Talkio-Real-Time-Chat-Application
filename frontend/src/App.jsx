@@ -7,6 +7,7 @@ import Login from "./Pages/Auth/Login";
 import Signup from "./Pages/Auth/Register";
 import ProfilePage from "./Pages/Profile/ProfilePage";
 import ProtectedRoute from "./Components/ProtectedRoute";
+import api from "../lib/axios.js";
 
 const App = () => {
   const isLoading = useSelector((state) => state.auth.loading);
@@ -15,24 +16,16 @@ const App = () => {
   useEffect(() => {
     async function refresh() {
       try {
-        const response = await fetch("http://localhost:4000/api/auth/refresh", {
-          method: "POST",
-          credentials: "include",
+        const response = await api.post("/auth/refresh", null, {
+          withCredentials: true,
         });
 
-        if (!response.ok) {
-          dispatch(authFailed());
-          return;
-        }
-
-        const data = await response.json();
-        dispatch(login(data));
+        dispatch(login(response.data));
       } catch (error) {
         console.error(error);
         dispatch(authFailed());
       }
     }
-
     refresh();
   }, [dispatch]);
 

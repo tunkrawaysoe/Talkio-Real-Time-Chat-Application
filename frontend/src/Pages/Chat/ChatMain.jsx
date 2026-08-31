@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import socket from "../../../lib/socket.js";
+import api from "../../../lib/axios.js";
 
 const ChatMain = ({
   selectedConversationId,
@@ -11,7 +12,6 @@ const ChatMain = ({
   const [message, setMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const currentUserId = useSelector((state) => state.auth.user?.id);
-  const accessToken = useSelector((state) => state.auth.accessToken);
   const typingTimeoutRef = useRef(null);
 
   const conversation = conversations.find(
@@ -19,12 +19,9 @@ const ChatMain = ({
   );
 
   const otherUser = conversation?.participants?.[0];
-  const isOnline = otherUser
-    ? onlineUserIds.includes(otherUser.userId)
-    : false;
+  const isOnline = otherUser ? onlineUserIds.includes(otherUser.userId) : false;
 
   function handleTyping() {
-    
     if (!conversation) return;
     socket.emit("typing", conversation.id);
     clearTimeout(typingTimeoutRef.current);
@@ -60,29 +57,12 @@ const ChatMain = ({
 
   async function sendMessage(e) {
     e.preventDefault();
-
     if (!message.trim()) return;
 
     try {
-      const response = await fetch(
-        `http://localhost:4000/api/message/${selectedConversationId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${accessToken}`,
-          },
-          body: JSON.stringify({
-            content: message.trim(),
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to send message");
-      }
-
-      await response.json();
+      await api.post(`/message/${selectedConversationId}`, {
+        content: message.trim(),
+      });
 
       setMessage("");
       clearTimeout(typingTimeoutRef.current);
@@ -124,13 +104,10 @@ const ChatMain = ({
             ) : (
               chatMessages.map((message) => {
                 const isOwnMessage = message.senderId === currentUserId;
-
                 return (
                   <div
                     key={message.id}
-                    className={`message ${
-                      isOwnMessage ? "sent" : "received"
-                    }`}
+                    className={`message ${isOwnMessage ? "sent" : "received"}`}
                   >
                     <p className="message-content">{message.content}</p>
                   </div>

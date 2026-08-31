@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import "./Auth.css";
 import { useDispatch } from "react-redux";
 import { login } from "../../store/authSlice.js";
+import api from "../../../lib/axios.js";
+import "./Auth.css";
+
 const Login = () => {
   const [userName, setUserName] = useState("");
   const [password, setPassword] = useState("");
@@ -12,22 +14,22 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const response = await fetch("http://localhost:4000/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-      body: JSON.stringify({
-        userName,
-        password,
-      }),
-    });
+    try {
+      const response = await api.post(
+        "/auth/login",
+        {
+          userName,
+          password,
+        },
+        {
+          withCredentials: true,
+        },
+      );
 
-    const data = await response.json();
-    if (response.ok) {
-      dispatch(login(data));
+      dispatch(login(response.data));
       navigate("/");
+    } catch (error) {
+      console.error("Login error:", error);
     }
   };
 

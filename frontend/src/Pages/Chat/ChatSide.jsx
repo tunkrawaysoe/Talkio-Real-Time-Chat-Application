@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { FiMenu, FiUser } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
+import api from "../../../lib/axios";
 
 const ChatSide = ({
   fetchUserConversations,
@@ -13,33 +14,23 @@ const ChatSide = ({
   const [search, setSearch] = useState("");
   const [searchUser, setSearchUser] = useState({});
   const [isShowMenu, setIsShowMenu] = useState(false);
-  const accessToken = useSelector((state) => state.auth.accessToken);
   const navigate = useNavigate();
 
   async function createConversation() {
     try {
-      const response = await fetch("http://localhost:4000/api/conversation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({
-          userId: searchUser.id,
-        }),
+      const response = await api.post("/conversation", {
+        userId: searchUser.id,
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Failed to create conversation");
-      }
       fetchUserConversations();
-      startConversation(data.conversation.id);
+      startConversation(response.data.conversation.id);
       setSearch("");
       setSearchUser({});
     } catch (error) {
-      console.error("Error creating conversation:", error);
+      console.error(
+        "Error creating conversation:",
+        error.response?.data?.message || error.message,
+      );
     }
   }
 
@@ -51,19 +42,11 @@ const ChatSide = ({
 
     async function findUser() {
       try {
-        const response = await fetch(
-          `http://localhost:4000/api/users/search?name=${encodeURIComponent(
-            search,
-          )}`,
+        const response = await api.get(
+          `/users/search?name=${encodeURIComponent(search)}`,
         );
 
-        if (!response.ok) {
-          setSearchUser({});
-          return;
-        }
-
-        const data = await response.json();
-        setSearchUser(data);
+        setSearchUser(response.data);
       } catch (error) {
         console.error("Search user error:", error);
         setSearchUser({});
