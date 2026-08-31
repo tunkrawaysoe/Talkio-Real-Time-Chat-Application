@@ -13,21 +13,21 @@ const ChatMain = ({
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const accessToken = useSelector((state) => state.auth.accessToken);
   const typingTimeoutRef = useRef(null);
-  console.log(chatMessages);
 
   const conversation = conversations.find(
     (conversation) => conversation.id === selectedConversationId,
   );
 
   const otherUser = conversation?.participants?.[0];
-  const isOnline = otherUser ? onlineUserIds.includes(otherUser.userId) : false;
+  const isOnline = otherUser
+    ? onlineUserIds.includes(otherUser.userId)
+    : false;
 
   function handleTyping() {
+    
     if (!conversation) return;
     socket.emit("typing", conversation.id);
-
     clearTimeout(typingTimeoutRef.current);
-
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("stop_typing", conversation.id);
     }, 1000);
@@ -56,7 +56,7 @@ const ChatMain = ({
       socket.off("stop_typing", handleStopTyping);
       clearTimeout(typingTimeoutRef.current);
     };
-  }, [selectedConversationId]);
+  }, [selectedConversationId, otherUser?.userId]);
 
   async function sendMessage(e) {
     e.preventDefault();
@@ -73,7 +73,7 @@ const ChatMain = ({
             Authorization: `Bearer ${accessToken}`,
           },
           body: JSON.stringify({
-            content: message,
+            content: message.trim(),
           }),
         },
       );
@@ -111,7 +111,7 @@ const ChatMain = ({
             </div>
 
             <div>
-              <h3>{otherUser?.name}</h3>
+              <h3>{otherUser?.name || "Unknown"}</h3>
               <span>{isOnline ? "Online" : ""}</span>
             </div>
           </header>
@@ -128,26 +128,11 @@ const ChatMain = ({
                 return (
                   <div
                     key={message.id}
-                    className={`message ${isOwnMessage ? "sent" : "received"}`}
+                    className={`message ${
+                      isOwnMessage ? "sent" : "received"
+                    }`}
                   >
-                    {isOwnMessage ? (
-                      <p>{message.content}</p>
-                    ) : (
-                      <div className="message-user">
-                        <div className="message-avatar">
-                          {message.imageUrl ? (
-                            <img src={message.imageUrl} alt={message.name} />
-                          ) : (
-                            message.name?.charAt(0).toUpperCase()
-                          )}
-                        </div>
-
-                        <div>
-                          <span className="message-name">{message.name}</span>
-                          <p>{message.content}</p>
-                        </div>
-                      </div>
-                    )}
+                    <p className="message-content">{message.content}</p>
                   </div>
                 );
               })
@@ -155,7 +140,7 @@ const ChatMain = ({
 
             {isTyping && (
               <div className="typing-indicator">
-                <p>{otherUser?.name} is typing...</p>
+                <p>{otherUser?.name || "User"} is typing...</p>
               </div>
             )}
           </div>

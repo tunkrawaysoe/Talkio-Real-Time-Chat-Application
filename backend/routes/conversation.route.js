@@ -186,12 +186,11 @@ router.get("/:conversationId", async (req, res) => {
             select: {
                 messages: {
                     select: {
+                        id: true,
                         content: true,
                         sender: {
                             select: {
                                 id: true,
-                                name: true,
-                                imageUrl: true
                             }
                         }
                     },
@@ -204,15 +203,14 @@ router.get("/:conversationId", async (req, res) => {
                 message: "Conversation not found",
             });
         }
+
         const formattedConversations = conversation.messages.map(message => {
             return {
+                id: message.id,
                 content: message.content,
-                senderId: message.sender.id,
-                name: message.sender.name,
-                imageUrl: message.sender.imageUrl
+                senderId: message.sender.id
             }
         })
-
         return res.status(200).json(formattedConversations);
     } catch (error) {
         console.error(error);

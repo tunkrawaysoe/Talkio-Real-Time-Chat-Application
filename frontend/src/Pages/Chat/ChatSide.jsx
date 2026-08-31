@@ -129,6 +129,7 @@ const ChatSide = ({
           const otherUser = conversation?.participants?.[0];
           const otherUserId = otherUser?.userId;
           const conversationName = otherUser?.name || "Unknown";
+          const imageUrl = otherUser?.imageUrl;
           const isOnline = onlineUserIds.includes(otherUserId);
 
           return (
@@ -141,7 +142,11 @@ const ChatSide = ({
             >
               <div className="avatar-wrapper">
                 <div className="avatar">
-                  {conversationName.charAt(0).toUpperCase()}
+                  {imageUrl ? (
+                    <img src={imageUrl} alt={conversationName} />
+                  ) : (
+                    conversationName.charAt(0).toUpperCase()
+                  )}
                 </div>
 
                 {isOnline && <span className="online-dot"></span>}
@@ -149,7 +154,6 @@ const ChatSide = ({
 
               <div className="conversation-info">
                 <h3>{conversationName}</h3>
-
                 <p>{conversation.lastMessage?.content || "No messages yet"}</p>
               </div>
             </div>
