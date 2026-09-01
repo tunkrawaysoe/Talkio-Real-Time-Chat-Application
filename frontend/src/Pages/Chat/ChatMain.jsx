@@ -13,6 +13,7 @@ const ChatMain = ({
   const [isTyping, setIsTyping] = useState(false);
   const currentUserId = useSelector((state) => state.auth.user?.id);
   const typingTimeoutRef = useRef(null);
+  const messageListRef = useRef(null);
 
   const conversation = conversations.find(
     (conversation) => conversation.id === selectedConversationId,
@@ -20,6 +21,12 @@ const ChatMain = ({
 
   const otherUser = conversation?.participants?.[0];
   const isOnline = otherUser ? onlineUserIds.includes(otherUser.userId) : false;
+
+  function scrollToBottom() {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }
 
   function handleTyping() {
     if (!conversation) return;
@@ -54,6 +61,10 @@ const ChatMain = ({
       clearTimeout(typingTimeoutRef.current);
     };
   }, [selectedConversationId, otherUser?.userId]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages, isTyping]);
 
   async function sendMessage(e) {
     e.preventDefault();
@@ -96,7 +107,7 @@ const ChatMain = ({
             </div>
           </header>
 
-          <div className="message-list">
+          <div className="message-list" ref={messageListRef}>
             {chatMessages.length === 0 ? (
               <div className="no-messages">
                 <p>No messages yet</p>

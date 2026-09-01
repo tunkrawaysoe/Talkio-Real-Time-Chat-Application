@@ -44,7 +44,6 @@ router.post("/:conversationId", authenticate, async (req, res) => {
                 content: content.trim(),
             },
         });
-
         const io = getIo();
 
         io.to(`conversation:${conversationId}`).emit(

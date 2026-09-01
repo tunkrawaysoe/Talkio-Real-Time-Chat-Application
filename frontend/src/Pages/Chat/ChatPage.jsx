@@ -66,6 +66,7 @@ const Chat = () => {
       setChatMessages((prev) => [
         ...prev,
         {
+          id: message.id,
           content: message.content,
           senderId: message.senderId,
         },
